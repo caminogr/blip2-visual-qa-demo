@@ -40,8 +40,9 @@ def visual_qa(image: Image.Image, question: str) -> str:
     prompt = f"Question: {question} Answer:"
     inputs = processor(images=image, text=prompt, return_tensors="pt")
     with torch.no_grad():
-        output = model.generate(**inputs, max_new_tokens=100)
-    answer = processor.decode(output[0], skip_special_tokens=True).strip()
+        generated_ids = model.generate(**inputs, max_new_tokens=100)
+        generated_ids = generated_ids[0, inputs["input_ids"].shape[1]:]
+    answer = processor.decode(generated_ids, skip_special_tokens=True).strip()
     return answer
 
 
@@ -51,6 +52,7 @@ def describe_image(image: Image.Image) -> str:
     prompt = "Describe this image in detail:"
     inputs = processor(images=image, text=prompt, return_tensors="pt")
     with torch.no_grad():
-        output = model.generate(**inputs, max_new_tokens=150)
-    description = processor.decode(output[0], skip_special_tokens=True).strip()
+        generated_ids = model.generate(**inputs, max_new_tokens=150)
+        generated_ids = generated_ids[0, inputs["input_ids"].shape[1]:]
+    description = processor.decode(generated_ids, skip_special_tokens=True).strip()
     return description
