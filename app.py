@@ -1,16 +1,27 @@
 """BLIP-2 Visual QA Demo — Gradio app with 3 tabs."""
 
+import traceback
+
 import gradio as gr
 from PIL import Image
 from src.blip2_model import generate_caption, visual_qa, describe_image
 from src.visualization import ensure_rgb
 
 
+def _format_error(e: Exception) -> str:
+    """Format an exception with its traceback for display in the UI."""
+    tb = traceback.format_exception(type(e), e, e.__traceback__)
+    return f"[Error] {type(e).__name__}: {e}\n\n{''.join(tb)}"
+
+
 def caption_tab(image):
     if image is None:
         return "Please upload an image."
-    image = ensure_rgb(Image.fromarray(image))
-    return generate_caption(image)
+    try:
+        image = ensure_rgb(Image.fromarray(image))
+        return generate_caption(image)
+    except Exception as e:
+        return _format_error(e)
 
 
 def vqa_tab(image, question):
@@ -18,23 +29,29 @@ def vqa_tab(image, question):
         return "Please upload an image."
     if not question or not question.strip():
         return "Please enter a question."
-    image = ensure_rgb(Image.fromarray(image))
-    return visual_qa(image, question.strip())
+    try:
+        image = ensure_rgb(Image.fromarray(image))
+        return visual_qa(image, question.strip())
+    except Exception as e:
+        return _format_error(e)
 
 
 def compare_tab(image1, image2):
     if image1 is None or image2 is None:
         return "Please upload both images."
-    img1 = ensure_rgb(Image.fromarray(image1))
-    img2 = ensure_rgb(Image.fromarray(image2))
+    try:
+        img1 = ensure_rgb(Image.fromarray(image1))
+        img2 = ensure_rgb(Image.fromarray(image2))
 
-    desc1 = describe_image(img1)
-    desc2 = describe_image(img2)
+        desc1 = describe_image(img1)
+        desc2 = describe_image(img2)
 
-    result = f"**Image 1:** {desc1}\n\n**Image 2:** {desc2}\n\n"
-    result += "**Differences:** The first image shows " + desc1.lower()
-    result += ", while the second image shows " + desc2.lower() + "."
-    return result
+        result = f"**Image 1:** {desc1}\n\n**Image 2:** {desc2}\n\n"
+        result += "**Differences:** The first image shows " + desc1.lower()
+        result += ", while the second image shows " + desc2.lower() + "."
+        return result
+    except Exception as e:
+        return _format_error(e)
 
 
 with gr.Blocks(title="BLIP-2 Visual QA Demo") as demo:
