@@ -37,7 +37,8 @@ def generate_caption(image: Image.Image) -> str:
 def visual_qa(image: Image.Image, question: str) -> str:
     """Answer a question about the given image."""
     processor, model = get_model()
-    inputs = processor(images=image, text=question, return_tensors="pt")
+    prompt = f"Question: {question} Answer:"
+    inputs = processor(images=image, text=prompt, return_tensors="pt")
     with torch.no_grad():
         output = model.generate(**inputs, max_new_tokens=100)
     answer = processor.decode(output[0], skip_special_tokens=True).strip()
